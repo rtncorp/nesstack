@@ -1,0 +1,8 @@
+{
+  "name": "nesstack",
+  "version": "0.1.0",
+  "description": "Twelve skills for coding with an AI assistant the way RTN does.",
+  "author": { "name": "RTN Networks" },
+  "license": "MIT",
+  "keywords": ["ai-coding", "vibe-coding", "claude-code", "testing", "code-review", "security", "agents"]
+}

@@ -1,0 +1,65 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned by commit SHA, never by a moving tag.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: The leak check catches every leak it claims to catch
+        run: node scripts/check-no-leaks.test.mjs
+
+      - name: Nothing in the repository reveals a real system (addresses, emails, credentials, private names)
+        env:
+          # Private names live in a repository secret, never in the repository.
+          NESSTACK_PRIVATE_TERMS: ${{ secrets.NESSTACK_PRIVATE_TERMS }}
+          # On main the private-name list must be loaded; a missing secret fails instead of passing quietly.
+          NESSTACK_REQUIRE_TERMS: ${{ github.event_name == 'push' && '1' || '' }}
+        run: node scripts/check-no-leaks.mjs
+
+      - name: No secret anywhere in the history (gitleaks)
+        env:
+          GITLEAKS_VERSION: 8.29.1
+          GITLEAKS_SHA256: e4eb209d04e20339d77122a3bdf9cd41351255cfb27ebcb75e85325e04f88924
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks git --redact --no-banner .
+
+      - name: The plugin and marketplace manifests are valid JSON with the fields Claude Code reads
+        run: |
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync(".claude-plugin/marketplace.json", "utf8"));
+            const p = JSON.parse(fs.readFileSync("plugins/nesstack/.claude-plugin/plugin.json", "utf8"));
+            if (!m.name || !m.owner || !Array.isArray(m.plugins) || !m.plugins.length) throw new Error("marketplace.json incomplete");
+            if (p.name !== m.plugins[0].name || p.version !== m.plugins[0].version) throw new Error("plugin.json and marketplace entry disagree");
+          '
+
+      - name: Every skill has a name, a description and a Spanish version
+        run: |
+          set -e
+          for d in plugins/nesstack/skills/*/; do
+            s=$(basename "$d")
+            f="$d/SKILL.md"
+            grep -q "^name: $s$" "$f" || { echo "$f: name must be $s"; exit 1; }
+            grep -q "^description: ." "$f" || { echo "$f: missing description"; exit 1; }
+            test -f "docs/es/skills/$s.md" || { echo "docs/es/skills/$s.md missing"; exit 1; }
+          done
