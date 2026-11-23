@@ -21,8 +21,10 @@ deja no peor, y el código nuevo es estricto.**
   `check:<module>`) que debe mantenerse en cero errores.
 - Para lo demás, un trinquete: "11 errores antes, 11 después, salida idéntica".
   El PR no arregla la deuda vieja y no agrega deuda nueva.
-- Lo mismo para los warnings del lint, la cobertura de pruebas y el tamaño de
-  los archivos: registra el número y haz fallar CI si sube.
+- Lo mismo para los warnings del lint y el tamaño de los archivos: registra
+  el número y haz fallar CI si sube.
+- La cobertura de pruebas va al revés: regístrala y haz fallar CI si baja.
+  Sube el número registrado cuando un PR la mejore.
 
 ## Dos lugares que se parecen
 

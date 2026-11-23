@@ -15,8 +15,10 @@ it no worse, and the new code is strict.**
   script) that must stay at zero errors.
 - For the rest, a ratchet: "11 errors before, 11 after, identical output".
   The PR does not fix old debt and does not add new debt.
-- The same for lint warnings, test coverage and file size: record the
-  number, fail CI if it goes up.
+- The same for lint warnings and file size: record the number, fail CI if
+  it goes up.
+- Test coverage ratchets the other way: record it, fail CI if it goes
+  down. Raise the recorded number when a PR improves it.
 
 ## Two lookalike places
 
