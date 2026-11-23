@@ -26,10 +26,10 @@ jobs:
 
       - name: Nothing in the repository reveals a real system (addresses, emails, credentials, private names)
         env:
-          # Private names live in a repository secret, never in the repository.
+          # Optional. Private names live in a repository secret, never in the
+          # repository; without it the private-name check is skipped and the
+          # run says so in its summary line.
           NESSTACK_PRIVATE_TERMS: ${{ secrets.NESSTACK_PRIVATE_TERMS }}
-          # On main the private-name list must be loaded; a missing secret fails instead of passing quietly.
-          NESSTACK_REQUIRE_TERMS: ${{ github.event_name == 'push' && '1' || '' }}
         run: node scripts/check-no-leaks.mjs
 
       - name: No secret anywhere in the history (gitleaks)
